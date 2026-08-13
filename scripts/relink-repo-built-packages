@@ -1,0 +1,35 @@
+#!/usr/bin/python3
+
+import sys
+from pathlib import Path
+import tarfile
+
+REPO_PATH = Path('Repo')
+GIT_PATH = Path('Packages/BioArchLinux')
+
+def get_pkgbase(f):
+  with tarfile.open(f) as tar:
+    data = tar.extractfile('.PKGINFO').read().decode()
+    for line in data.splitlines():
+      if line.startswith('pkgbase = '):
+        return line.split(' = ', 1)[1]
+
+def process_diretory(d):
+  for file in d.iterdir():
+    if file.is_file() and file.name.endswith('.pkg.tar.zst'):
+      pkgbase = get_pkgbase(file)
+      link = GIT_PATH / pkgbase / file.name
+      if not link.exists():
+        print(f'Creating link {link}', file=sys.stderr)
+        try:
+          link.hardlink_to(file)
+        except FileNotFoundError:
+          print(f'Failed to create link {link}', file=sys.stderr)
+
+def main():
+  for d in REPO_PATH.iterdir():
+    if d.is_dir():
+      process_diretory(d)
+
+if __name__ == '__main__':
+  main()
