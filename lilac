@@ -366,6 +366,23 @@ def try_pick_some(
                       if x not in picked]
 
   if not ret and starving:
+    worker_names = {wm.name for wm in workermans}
+    no_worker_pkgs: set[str] = set()
+    for pkg in ready_to_build:
+      if (info := repo.lilacinfos.get(pkg)) \
+         and info.allowed_workers \
+         and not worker_names.intersection(info.allowed_workers):
+        logger.error('%s has no allowed workers, failing', pkg)
+        buildsorter.done(pkg)
+        no_worker_pkgs.add(pkg)
+        if db.USE:
+          with db.get_session() as s:
+            db.mark_pkg_as(s, pkg, 'done')
+            db.build_updated(s)
+    ready_to_build = [x for x in ready_to_build if x not in no_worker_pkgs]
+    if not ready_to_build:
+      return [], False
+
     wm = workermans[0]
     def sort_key(pkg):
       p = buildsorter.priority_func(pkg)
