@@ -98,3 +98,13 @@ libgit2:
   alpm: libgit2
   provided: libgit2.so
   strip_release: true
+abseil-cpp-check:
+  source: alpmfiles
+  pkgname: abseil-cpp
+  strip_dir: true
+  filename: libabsl_log_internal_check_op\.so\.(.*)
+abseil-cpp-message:
+  source: alpmfiles
+  pkgname: abseil-cpp
+  strip_dir: true
+  filename: libabsl_log_internal_message\.so\.(.*)
